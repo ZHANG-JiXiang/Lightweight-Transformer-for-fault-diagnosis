@@ -36,17 +36,6 @@ Experimental rig ：
 
 ![西安交通大学实验装置](https://github.com/bighan123/HNUIDG-Fault-Diagnosis-/blob/main/png/Figure_XJTUGearbox.jpg)
 
-3.The gearbox fault datasets collect from DDS
-
-Data file structure：
-
-```python
-| Data/
-|---- work condtion1
-|     |---- data.xx
-|---- work condtion2
-|     |---- data.xx
-```
 
 #### Installation Tutorial 
 
