@@ -6,9 +6,15 @@ Data file structure：
 
 ```
 | Data/
-|————work condition1.xx
-|----work condition2.xx
-|----.....
+|----IF_1
+|    |---- REC3597_ch2.xx
+|    |---- REC3598_ch2.xx
+|    |---- ......
+|----OF_1
+|    |---- REC3513_ch2.xx
+|    |---- REC3514_ch2.xx
+|    |---- ......
+|......
 ```
 
 Experimental rig ：
@@ -39,6 +45,7 @@ Experimental rig ：
 
 
 Dataset acquisition：
+
 [SQV Datasets](https://drive.google.com/drive/folders/1ejGZu9oeL1D9nKN07Q7z72O8eFrWQTay)
 
 [XJTU Gearbox Datasets](https://drive.google.com/drive/folders/1ejGZu9oeL1D9nKN07Q7z72O8eFrWQTay)
