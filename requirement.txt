@@ -9,4 +9,3 @@ torch==1.7.1
 torchvision==0.8.2
 matplotlib==3.4.2
 tensorboard==2.5.0
-thop==0.0.31.post2005241907
