@@ -13,7 +13,7 @@ Data file structure：
 
 Experimental rig ：
 
-![Test rig of SQV datase](https://github.com/bighan123/HNUIDG-Fault-Diagnosis-/blob/main/png/湖大试验台.jpg)
+![Test rig of SQV datase](https://github.com/ZHANG-JiXiang/Lightweight-Transformer-for-fault-diagnosis/blob/main/png/SQV.pdf)
 
 2.The gearbox fault datasets collect from XJTU
 
@@ -34,7 +34,7 @@ Data file structure：
 
 Experimental rig ：
 
-![西安交通大学实验装置](https://github.com/bighan123/HNUIDG-Fault-Diagnosis-/blob/main/png/Figure_XJTUGearbox.jpg)
+![Test rig of XJTU gearbox dataset](https://github.com/bighan123/HNUIDG-Fault-Diagnosis-/blob/main/png/Figure_XJTUGearbox.jpg)
 
 
 
