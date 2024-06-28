@@ -34,7 +34,7 @@ Data file structure：
 
 Experimental rig ：
 
-![Test rig of XJTU gearbox dataset](https://github.com/bighan123/HNUIDG-Fault-Diagnosis-/blob/main/png/Figure_XJTUGearbox.jpg)
+![Test rig of XJTU gearbox dataset](https://github.com/ZHANG-JiXiang/Lightweight-Transformer-for-fault-diagnosis/blob/main/png/Figure_XJTUGearbox.jpg)
 
 
 
