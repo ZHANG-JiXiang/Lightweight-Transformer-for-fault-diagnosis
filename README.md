@@ -1,6 +1,6 @@
 #### Description of datasets
 
-1.The bevel gearbox fault datasets collect from HNU
+1.The spectra quest bench under variable speed dataset
 
 Data file structure：
 
@@ -13,7 +13,7 @@ Data file structure：
 
 Experimental rig ：
 
-![湖南大学实验装置](https://github.com/bighan123/HNUIDG-Fault-Diagnosis-/blob/main/png/湖大试验台.jpg)
+![Test rig of SQV datase](https://github.com/bighan123/HNUIDG-Fault-Diagnosis-/blob/main/png/湖大试验台.jpg)
 
 2.The gearbox fault datasets collect from XJTU
 
