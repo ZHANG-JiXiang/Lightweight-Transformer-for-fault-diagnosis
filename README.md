@@ -42,7 +42,4 @@ Experimental rig ：
 [XJTU Gearbox Datasets](https://drive.google.com/drive/folders/1ejGZu9oeL1D9nKN07Q7z72O8eFrWQTay)
 
 
-fletahsy@hnu.edu.cn
-
-Mentor E-mail：hdshao@hnu.edu.cn
 
