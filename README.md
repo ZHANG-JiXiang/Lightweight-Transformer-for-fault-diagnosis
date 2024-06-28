@@ -19,7 +19,7 @@ Data file structure：
 
 Experimental rig ：
 
-![Test rig of SQV datase](https://github.com/ZHANG-JiXiang/Lightweight-Transformer-for-fault-diagnosis/blob/main/png/SQV.pdf)
+![Test rig of SQV datase](https://github.com/ZHANG-JiXiang/Lightweight-Transformer-for-fault-diagnosis/blob/main/png/SQV.jpg)
 
 2.The gearbox fault datasets collect from XJTU
 
