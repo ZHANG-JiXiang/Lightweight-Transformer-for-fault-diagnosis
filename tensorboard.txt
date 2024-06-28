@@ -1,5 +1,0 @@
-tensorboard --logdir=D:\1Deeplearning\HNUIDG-Fault-Diagnosis--main\save\tensorboard
-tensorboard --logdir=D:\1Deeplearning\实验数据\logs\XJTU-10\tensorboard
-tensorboard --logdir=D:\1Deeplearning\实验数据\logs\XJTU-30\tensorboard
-tensorboard --logdir=D:\1Deeplearning\实验数据\logs\XJTU-50\tensorboard
-tensorboard --logdir=D:\1Deeplearning\实验数据\logs\XJTU-100\tensorboard
