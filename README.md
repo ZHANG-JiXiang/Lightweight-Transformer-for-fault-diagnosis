@@ -1,3 +1,8 @@
+#### Reference
+
+This project is based on the following items
+(https://github.com/bighan123/HNUIDG-Fault-Diagnosis-)
+
 #### Description of datasets
 
 1.The spectra quest bench under variable speed dataset
