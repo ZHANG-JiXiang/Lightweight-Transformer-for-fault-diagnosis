@@ -51,7 +51,7 @@ Experimental rig ：
 
 Dataset acquisition：
 
-[SQV Datasets](https://drive.google.com/drive/folders/1ejGZu9oeL1D9nKN07Q7z72O8eFrWQTay)
+[SQV Datasets](https://drive.google.com/drive/folders/1nEuflCwTMatbI2j14tyZi9VElavYTrAX?usp=drive_link)
 
 [XJTU Gearbox Datasets](https://drive.google.com/drive/folders/1ejGZu9oeL1D9nKN07Q7z72O8eFrWQTay)
 
