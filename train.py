@@ -61,7 +61,7 @@ def parse_args():
     parser.add_argument("--num_cls", type=int, default=9, help="the classification classes")
     # SQV default=7, XJTU default=9
     parser.add_argument("--size", type=int, default=128, help="Number of all samples")
-    parser.add_argument('--train_size_use', type=str, default="50",
+    parser.add_argument('--train_size_use', type=str, default="100",
                         help="the dataset size of each type during training preprocess")
     parser.add_argument('--test_size', type=int, default=300,
                         help="the dataset size of each type during testing preprocess")
