@@ -1,4 +1,5 @@
 from .vgg import vgg11, vgg13, vgg16, vgg19
+from .mobilev2 import mobilenet_half
 from .wrn import wrn_16_1, wrn_16_2, wrn_40_1, wrn_40_2
 from .ehcnn import ehcnn_24_16, ehcnn_30_32, ehcnn_24_16_dilation
 from .resnet import resnet18, resnet34, resnet50, resnet101, resnet152
@@ -12,8 +13,9 @@ from .nat import nat_tiny, nat_small, nat_base
 from .MCSwin import mcswinT
 from .uniformer import uniformer_tiny
 from .crossvit import cross_vit_tiny, cross_vit_big, cross_vit_base
+from .Cot import CotswinT
 from .MSACT import MCSA_Transformer
-
+from.transformer import Transformer
 model_dict = {'vgg11': vgg11,
               'vgg13': vgg13,
               'vgg16': vgg16,
@@ -39,6 +41,7 @@ model_dict = {'vgg11': vgg11,
               'vit_base': vit_base,
               'vit_middle_16': vit_middle_patch16,
               'vit_middle_32': vit_middle_patch32,
+              "mobilenet_half": mobilenet_half,
               'max_vit_tiny_16': max_vit_tiny_16,
               'max_vit_tiny_32': max_vit_tiny_32,
               'max_vit_small_16': max_vit_small_16,
@@ -55,5 +58,7 @@ model_dict = {'vgg11': vgg11,
               'cross_vit_tiny':cross_vit_tiny,
               'cross_vit_base':cross_vit_base,
               'cross_vit_big':cross_vit_big,
-              'MCSAT': MCSA_Transformer
+              'cotswinT': CotswinT,
+              'MCSAT': MCSA_Transformer,
+              'transformer': Transformer
               }

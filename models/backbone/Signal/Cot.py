@@ -1,10 +1,13 @@
+import numpy as np
+from models.backbone.Signal.vit import Mlp, DropPath
+from models.backbone.Signal.maxvit import window_partition, window_reverse
+from models.backbone.Signal.nat import ConvDownsampler
 import torch.nn as nn
 import torch
 import torch.nn.functional as F
 from einops import rearrange
 from torch import Tensor, LongTensor
 from typing import Tuple, Optional
-from models.backbone.Signal.vit import Mlp, DropPath
 import math
 
 
@@ -41,7 +44,7 @@ class PyramidConvPatchEmbedding(nn.Module):
 
 
 class DepthwiseSeparableConv(nn.Module):
-    def __init__(self, in_channels, out_channels, kernel_size=8, stride=8):
+    def __init__(self, in_channels, out_channels, kernel_size, stride):
         super(DepthwiseSeparableConv, self).__init__()
         self.depthwise = nn.Sequential(
             nn.Conv1d(in_channels, in_channels, kernel_size, stride, groups=in_channels),
@@ -485,60 +488,179 @@ class BiLevelRoutingAttention_nchw(nn.Module):
         return output
 
 
-class DSATBlock(nn.Module):
+class MCSwinTransformerBlock(nn.Module):
     def __init__(self,
                  dim,
-                 mlp_ratio=0.5,
-                 drop_ratio=0.,
-                 drop_path_ratio=0.,
+                 num_heads,
+                 window_size=8,
+                 shift_size=0,
+                 mlp_ratio=4,
+                 qkv_bias=True,
+                 qk_sacle=None,
+                 drop=0.,
+                 attn_drop=0.,
+                 drop_path=0.,
                  act_layer=nn.GELU,
-                 norm_layer=nn.LayerNorm):
-        super(DSATBlock, self).__init__()
-        self.norm1 = norm_layer(dim) if norm_layer else nn.Identity()
-        # NOTE: drop path for stochastic depth, we shall see if this is better than dropout here
-        self.drop_path = DropPath(drop_path_ratio) if drop_path_ratio > 0. else nn.Identity()
-        self.norm2 = norm_layer(dim) if norm_layer else nn.Identity()
-        mlp_hidden_dim = int(dim * mlp_ratio)
-        self.mlp = Mlp(in_features=dim, hidden_features=mlp_hidden_dim, act_layer=act_layer, drop=drop_ratio)
-        self.BRA = BiLevelRoutingAttention_nchw(64)
+                 norm_layer=nn.LayerNorm,
+                 layer_scale=None):
+        super().__init__()
+
+        self.dim = dim
+        self.num_heads = num_heads
+        self.window_size = window_size
+        self.mlp_ratio = mlp_ratio
+        self.shift_size = shift_size
+
+        assert 0 <= self.shift_size < self.window_size, \
+            'the value of shift_size must bigger than 0 and smaller than window size'
+
+        self.norm1 = norm_layer(dim)
+        self.attention = BiLevelRoutingAttention_nchw(128).cuda()
+        self.drop_path = DropPath(drop_path) if drop_path > 0. else nn.Identity()
+        self.norm2 = norm_layer(dim)
+        self.mlp = Mlp(in_features=dim, hidden_features=int(dim * mlp_ratio), act_layer=act_layer, drop=drop)
+        self.layer_scale = False
+        # use layer scale
+        if layer_scale is not None and type(layer_scale) in [int, float]:
+            self.layer_scale = True
+            self.gamma1 = nn.Parameter(layer_scale * torch.ones(dim), requires_grad=True)
+            self.gamma2 = nn.Parameter(layer_scale * torch.ones(dim), requires_grad=True)
 
     def forward(self, x):
-        x1 = x
-        x = self.norm1(x)
-        B, C, N = x.size()
+        print(x.shape)
+        B, N, C = x.shape
         H, W = find_closest_factors(N)
-        x_r = x.view(-1, C, H, W)
-        x = self.BRA(x_r)
-        B, C, H, W = x.size()
-        x = x.view(B, C, N)
-        x = self.drop_path(x)
-        x = x+x1
-        x = x + self.drop_path(self.mlp(self.norm2(x)))
+        x_r = x.contiguous().view(-1, C, H, W)
+        output = self.attention(x_r)
+        B, C, H, W = output.size()
+        x = x.contiguous().view(B, C, N)
+        x = x.transpose(-1, -2)
         return x
 
 
-class MCSAT(nn.Module):
-    # Multi-Scale Convolutional Sparse Attention Transformer
+class MCSwinlayer(nn.Module):
+    def __init__(self,
+                 dim,
+                 depth,
+                 num_heads,
+                 window_size=8,
+                 downsample=False,
+                 mlp_ratio=4,
+                 qkv_bias=True,
+                 qk_sacle=None,
+                 drop=0.,
+                 attn_drop=0.,
+                 drop_path=0.,
+                 act_layer=nn.GELU,
+                 norm_layer=nn.LayerNorm,
+                 layer_scale=None):
+        super().__init__()
+        self.dim = dim
+        self.depth = depth
+        self.num_heads = num_heads
+        self.window_size = window_size
+        self.shift_size = window_size // 2
+
+        # build stages
+        self.blocks = nn.Sequential(*[
+            MCSwinTransformerBlock(dim=dim,
+                                   num_heads=num_heads,
+                                   window_size=window_size,
+                                   shift_size=0 if (i % 2 == 0) else self.shift_size,
+                                   mlp_ratio=mlp_ratio,
+                                   qkv_bias=qkv_bias,
+                                   qk_sacle=qk_sacle,
+                                   drop=drop,
+                                   attn_drop=attn_drop,
+                                   drop_path=drop_path[i] if isinstance(drop_path, list) else drop_path,
+                                   act_layer=act_layer,
+                                   norm_layer=norm_layer,
+                                   layer_scale=layer_scale)
+            for i in range(depth)])
+        self.downsample = downsample
+        self.downsample_layer = ConvDownsampler(dim=dim) if downsample else nn.Identity()
+
+    def create_mask(self, x, N):
+        if N % self.window_size != 0:
+            Np = int(np.ceil(N / self.window_size)) * self.window_size
+        else:
+            Np = N
+        img_mask = torch.zeros((1, Np, 1), device=x.device)
+        n_slices = (slice(0, -self.window_size),
+                    slice(-self.window_size, -self.shift_size),
+                    slice(-self.shift_size, None))
+        cnt = 0
+        for n in n_slices:
+            img_mask[:, n, :] = cnt
+            cnt += 1
+
+        # [num_windows, window_size, 1]
+        mask_windows = window_partition(img_mask.transpose(-1, -2), windows_size=self.window_size)
+        # [num_windows, window_size]
+        mask_windows = mask_windows.view(-1, self.window_size)
+        attn_mask = mask_windows.unsqueeze(1) - mask_windows.unsqueeze(2)
+
+        attn_mask = attn_mask.masked_fill(attn_mask != 0, float(-100)).masked_fill(attn_mask == 0, float(0.0))
+        return attn_mask
+
+    def forward(self, x, N):
+        for block in self.blocks:
+            block.L = N
+            x = block(x)
+        x = self.downsample_layer(x)
+        if self.downsample:
+            N = (N + 1) // 2
+        return x, N
+
+
+class MCSwin_T(nn.Module):
     def __init__(self,
                  in_c,
                  num_cls,
                  h_args,
-                 dim,
                  kernel_sizes,
                  strides,
-                 out_channels):
+                 out_channels,
+                 dim,
+                 depth,
+                 num_heads,
+                 window_size,
+                 downscale=False,
+                 mlp_ratio=4,
+                 qkv_bias=True,
+                 qk_scale=None,
+                 drop=0.,
+                 attn_drop=0.,
+                 act_layer=nn.GELU,
+                 norm_layer=nn.LayerNorm,
+                 layer_scale=0.5):
         super().__init__()
 
-        self.PCPatchEmbedding = PyramidConvPatchEmbedding(in_c=in_c,
+        self.conv_embedding = PyramidConvPatchEmbedding(in_c=in_c,
                                                       kernel_sizes=kernel_sizes,
                                                       strides=strides,
                                                       out_channels=out_channels)
-        self.DWSConv = DepthwiseSeparableConv(in_channels=out_channels[-1], out_channels=dim)
+
+        self.patch_embedding = DepthwiseSeparableConv(in_channels=out_channels[-1], out_channels=dim,
+                                             kernel_size=8, stride=8)
+
+        self.SwinTransformerBlock = MCSwinlayer(dim=dim,
+                                                depth=depth,
+                                                num_heads=num_heads,
+                                                window_size=window_size,
+                                                downsample=downscale,
+                                                mlp_ratio=mlp_ratio,
+                                                qkv_bias=qkv_bias,
+                                                qk_sacle=qk_scale,
+                                                drop=drop,
+                                                attn_drop=attn_drop,
+                                                act_layer=act_layer,
+                                                norm_layer=norm_layer,
+                                                layer_scale=layer_scale)
         self.avg_pool = nn.AdaptiveAvgPool1d(1)
         self.classifier = nn.ModuleList()
         self.avg_pool = nn.AdaptiveAvgPool1d(1)
         self.last_channels = dim
-        self.Sparse_Attention_Transformerblock = DSATBlock(dim=dim)
         if not h_args:
             self.classifier.append(nn.Linear(self.last_channels, num_cls))
             self.classifier.append(nn.Softmax(dim=-1))
@@ -553,10 +675,10 @@ class MCSAT(nn.Module):
 
     def forward(self, x):
         b = x.shape[0]
-        x = self.PCPatchEmbedding(x)
-        x = self.DWSConv(x)
-        x = x.transpose(-1, -2)
-        x = self.Sparse_Attention_Transformerblock(x)
+        x = self.conv_embedding(x)
+        x = self.patch_embedding(x).transpose(-1, -2)
+        _, N, _ = x.shape
+        x, N = self.SwinTransformerBlock(x, N)
         x = self.avg_pool(x.transpose(-1, -2))
         x = x.view(b, -1)
         for module in self.classifier:
@@ -564,9 +686,10 @@ class MCSAT(nn.Module):
         return x
 
 
-def MCSA_Transformer(in_c, h_args, num_cls):
-    model = MCSAT(in_c=in_c, h_args=h_args, num_cls=num_cls, dim=128,
-                    kernel_sizes=[21, 13, 7, 3],
-                    strides=[2, 1, 1, 1],
-                    out_channels=[8, 16, 32, 64])
+def CotswinT(in_c, h_args, num_cls):
+    model = MCSwin_T(in_c=in_c, h_args=h_args, num_cls=num_cls,
+                     kernel_sizes=[15, 9, 5, 3],
+                     strides=[2, 1, 1, 1],
+                     out_channels=[64, 128, 128, 192],
+                     dim=128, depth=12, num_heads=8, window_size=32)
     return model
