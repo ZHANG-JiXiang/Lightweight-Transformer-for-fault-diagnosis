@@ -61,8 +61,7 @@ def parse_args():
     parser.add_argument("--num_cls", type=int, default=9, help="the classification classes")
     # SQV default=7, XJTU default=9
     parser.add_argument("--size", type=int, default=128, help="Number of all samples")
-    parser.add_argument('--train_size_use', type=str, default="100",
-
+    parser.add_argument('--train_size_use', type=str, default="50",
                         help="the dataset size of each type during training preprocess")
     parser.add_argument('--test_size', type=int, default=300,
                         help="the dataset size of each type during testing preprocess")
@@ -252,8 +251,8 @@ def main():
     with open(test_save_pkl, "wb") as tf:
         pickle.dump(test_save_pkl, tf)
     # 模型评估
-    # print("==> Evaluating model and plotting confusion matrix")
-    # evaluate_and_plot_confusion_matrix(model, test_loader, opt)
+    print("==> Evaluating model and plotting confusion matrix")
+    evaluate_and_plot_confusion_matrix(model, test_loader, opt)
 
 
 def plot_confusion_matrix(cm, classes, accuracy, normalize=False, cmap=plt.cm.Blues):
