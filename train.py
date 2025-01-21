@@ -59,8 +59,10 @@ def parse_args():
                                                                                   "dds_datasets",
                                                                                   "sqv_datasets"])
     parser.add_argument("--num_cls", type=int, default=9, help="the classification classes")
+    # SQV default=7, XJTU default=9
     parser.add_argument("--size", type=int, default=128, help="Number of all samples")
-    parser.add_argument('--train_size_use', type=str, default="50",
+    parser.add_argument('--train_size_use', type=str, default="100",
+
                         help="the dataset size of each type during training preprocess")
     parser.add_argument('--test_size', type=int, default=300,
                         help="the dataset size of each type during testing preprocess")
@@ -81,7 +83,8 @@ def parse_args():
                                  'mcswin_t',
                                  'uniformer_tiny',
                                  'cross_vit_tiny', 'cross_vit_base', 'cross_vit_big',
-                                 'MCSAT'],
+                                 'MCSAT',
+                                 'transformer'],
                         help="the name of model")
     parser.add_argument("-ic", "--input_channel", type=int, default=2, help="the input channel of input data")
     parser.add_argument("--layer_args", type=str, default='100,64,32', help="the hidden layer neurons")
@@ -163,7 +166,7 @@ def main():
     flops, params = profile(model, inputs=(input_data,))
     print('flops:{}'.format(flops))
     print('params:{}'.format(params))
-
+    #
     print("Loading data ==> ......")
     train_loader, test_loader = get_loaders_new(opt, MyDatasets=datasets_using)
     # create optimizer, lr_scheduler, loss_function, scaler
@@ -249,8 +252,8 @@ def main():
     with open(test_save_pkl, "wb") as tf:
         pickle.dump(test_save_pkl, tf)
     # 模型评估
-    print("==> Evaluating model and plotting confusion matrix")
-    evaluate_and_plot_confusion_matrix(model, test_loader, opt)
+    # print("==> Evaluating model and plotting confusion matrix")
+    # evaluate_and_plot_confusion_matrix(model, test_loader, opt)
 
 
 def plot_confusion_matrix(cm, classes, accuracy, normalize=False, cmap=plt.cm.Blues):
